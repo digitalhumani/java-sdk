@@ -1,0 +1,4 @@
+src/main/resources/
+.metals
+target
+.DS_Store
