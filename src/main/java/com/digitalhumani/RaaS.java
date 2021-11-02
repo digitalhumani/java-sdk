@@ -86,9 +86,9 @@ public final class RaaS
         this.environment = environmentFromConfig;
         this.enterpriseId = enterpriseIdFromConfig;
 
-        this.treePlanter = new RaaSTreePlanter();
-
         setUrl();
+
+        this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
     }
 
     public RaaS(String apiKey, String environment, String enterpriseId)
@@ -101,20 +101,20 @@ public final class RaaS
         this.environment = environment;
         this.enterpriseId = enterpriseId;
 
-        this.treePlanter = new RaaSTreePlanter();
-
         setUrl();        
+
+        this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
     }
 
     public CompletableFuture<TreesPlanted> plantATree(String projectId, String user) 
     throws RaaSException
     {
-        return this.treePlanter.plantATree(this.url, this.enterpriseId, this.apiKey, projectId, user);
+        return this.treePlanter.plantATree(this.enterpriseId, projectId, user);
     }
 
     public CompletableFuture<TreesPlanted> plantSomeTrees(String projectId, String user, Integer treeCount) 
     throws RaaSException
     {
-        return this.treePlanter.plantSomeTrees(this.url, this.enterpriseId, this.apiKey, projectId, user, treeCount);
+        return this.treePlanter.plantSomeTrees(this.enterpriseId, projectId, user, treeCount);
     }
 }

@@ -15,6 +15,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlanted> {
 
     private ObjectMapper objectMapper = new ObjectMapper();
+    private String url = "";
+    private String apiKey = "";
+
+    // constants
+    private static final String RELATIVE_URL = "/tree";
+    private static final String USER_AGENT = "Digital Humani Java SDK";
+    private static final String CONTENT_TYPE = "application/json";
+
+    public TreePlanterHTTPHelper(String url, String apiKey) {
+        this.url = url;
+        this.apiKey = apiKey;
+    }
 
     public String toJson(TreePlantingRequest request) throws RaaSException {
         String requestBody = "";
@@ -29,9 +41,9 @@ public class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, Tr
         return requestBody;
     }
 
-    public HttpRequest buildRequest(String url, String apiKey, String requestBody) {
-        return HttpRequest.newBuilder(URI.create(url)).setHeader("Content-Type", "application/json")
-                .setHeader("X-API-KEY", apiKey).setHeader("User-Agent", "Digital Humani Java SDK")
+    public HttpRequest buildRequest(String requestBody) {
+        return HttpRequest.newBuilder(URI.create(this.url + RELATIVE_URL)).setHeader("Content-Type", CONTENT_TYPE)
+                .setHeader("X-API-KEY", this.apiKey).setHeader("User-Agent", USER_AGENT)
                 .POST(BodyPublishers.ofString(requestBody)).build();
     }
 

@@ -112,8 +112,7 @@ public class RaaSTest {
 
         TreesPlanted result = new TreesPlanted(uuid, enterpriseId, projectId, user, treeCount);
 
-        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantATree(url,
-                enterpriseId, apiKey, projectId, user);
+        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantATree(enterpriseId, projectId, user);
 
         RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
 
@@ -127,7 +126,7 @@ public class RaaSTest {
 
         future.get();
 
-        verify(mockPlanter, times(1)).plantATree(url, enterpriseId, apiKey, projectId, user);
+        verify(mockPlanter, times(1)).plantATree(enterpriseId, projectId, user);
 
     }
 
@@ -145,7 +144,7 @@ public class RaaSTest {
 
         when(mockHttpHelper.toJson(any())).thenReturn("");
 
-        when(mockHttpHelper.buildRequest(anyString(), anyString(), anyString()))
+        when(mockHttpHelper.buildRequest(anyString()))
                 .thenReturn(HttpRequest.newBuilder(URI.create(url)).build());
 
         when(mockHttpHelper.parseResponse()).thenReturn((stringBody) -> {
