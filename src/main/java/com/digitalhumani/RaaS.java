@@ -8,8 +8,9 @@ import javax.naming.ConfigurationException;
 
 import com.digitalhumani.config.Config;
 import com.digitalhumani.exceptions.RaaSException;
-import com.digitalhumani.interfaces.TreePlanter;
-import com.digitalhumani.models.TreesPlanted;
+import com.digitalhumani.tree.RaaSTreePlanter;
+import com.digitalhumani.tree.interfaces.TreePlanter;
+import com.digitalhumani.tree.models.TreesPlanted;
 
 /**
  * Hello world!

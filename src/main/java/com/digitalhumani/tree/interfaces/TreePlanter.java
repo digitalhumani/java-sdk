@@ -1,9 +1,9 @@
-package com.digitalhumani.interfaces;
+package com.digitalhumani.tree.interfaces;
 
 import java.util.concurrent.CompletableFuture;
 
 import com.digitalhumani.exceptions.RaaSException;
-import com.digitalhumani.models.TreesPlanted;
+import com.digitalhumani.tree.models.TreesPlanted;
 
 public interface TreePlanter {
     public CompletableFuture<TreesPlanted> plantATree(String enterpriseId, String projectId, String user) throws RaaSException;

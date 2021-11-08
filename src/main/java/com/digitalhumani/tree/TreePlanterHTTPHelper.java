@@ -1,4 +1,4 @@
-package com.digitalhumani.utils;
+package com.digitalhumani.tree;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -7,12 +7,12 @@ import java.util.function.Function;
 
 import com.digitalhumani.exceptions.RaaSException;
 import com.digitalhumani.interfaces.HTTPHelper;
-import com.digitalhumani.models.TreePlantingRequest;
-import com.digitalhumani.models.TreesPlanted;
+import com.digitalhumani.tree.models.TreePlantingRequest;
+import com.digitalhumani.tree.models.TreesPlanted;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlanted> {
+class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlanted> {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private String url = "";

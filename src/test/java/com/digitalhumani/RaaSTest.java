@@ -3,23 +3,18 @@ package com.digitalhumani;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.util.concurrent.CompletableFuture;
 
 import javax.naming.ConfigurationException;
 
-import com.digitalhumani.exceptions.RaaSException;
-import com.digitalhumani.interfaces.HTTPHelper;
-import com.digitalhumani.interfaces.TreePlanter;
-import com.digitalhumani.models.TreePlantingRequest;
-import com.digitalhumani.models.TreesPlanted;
-import com.digitalhumani.utils.TreePlanterHTTPHelper;
+import com.digitalhumani.tree.interfaces.TreePlanter;
+import com.digitalhumani.tree.models.TreesPlanted;
 
 /**
  * Unit test for simple App.
@@ -59,47 +54,7 @@ public class RaaSTest {
     }
 
     @Test
-    public void should_Return_TreePlanted_Object_With_Valid_API_Configuration_One_Tree() throws Exception {
-        RaaS raas = new RaaS();
-
-        String projectId = "77222222";
-        String user = "JUnit";
-        Integer treeCount = 1;
-
-        var future = raas.plantATree(projectId, user).thenAccept(s -> {
-            assertTrue(s.isSuccess());
-            assertEquals(null, s.getException());
-            assertFalse(s.getUUId().isBlank());
-            assertEquals(projectId, s.getProjectId());
-            assertEquals(raas.getEnterpriseId(), s.getEnterpriseId());
-            assertEquals(user, s.getUser());
-            assertEquals(treeCount, s.getTreeCount());
-        });
-        future.get();
-    }
-
-    @Test
-    public void should_Return_TreePlanted_Object_With_Valid_API_Configuration_Some_Trees() throws Exception {
-        RaaS raas = new RaaS();
-
-        String projectId = "77222222";
-        String user = "JUnit";
-        Integer treeCount = 15;
-
-        var future = raas.plantSomeTrees(projectId, user, treeCount).thenAccept(s -> {
-            assertTrue(s.isSuccess());
-            assertEquals(null, s.getException());
-            assertFalse(s.getUUId().isBlank());
-            assertEquals(projectId, s.getProjectId());
-            assertEquals(raas.getEnterpriseId(), s.getEnterpriseId());
-            assertEquals(user, s.getUser());
-            assertEquals(treeCount, s.getTreeCount());
-        });
-        future.get();
-    }
-
-    @Test
-    public void should_Call_TreePlanter_Only_Once() throws Exception {
+    public void should_Call_TreePlanter_Only_Once_For_One_Tree() throws Exception {
         TreePlanter mockPlanter = mock(TreePlanter.class);
 
         String uuid = "uuid";
@@ -131,42 +86,35 @@ public class RaaSTest {
     }
 
     @Test
-    public void should_Set_Exception_On_TreesPlanted_Object_When_Parsing_Error_Occurs() throws Exception {
-        
-        String url = "https://example.com/";
+    public void should_Call_TreePlanter_Only_Once_For_Some_Trees() throws Exception {
+        TreePlanter mockPlanter = mock(TreePlanter.class);
+
+        String uuid = "uuid";
+        String url = "https://foo.bar";
         String enterpriseId = "foo";
         String projectId = "bar";
         String apiKey = "junit-api-key-test";
         String user = "JUnit";
-        String expectedErrorString = "JUnit Exception";
+        Integer treeCount = 5;
 
-        HTTPHelper<TreePlantingRequest, TreesPlanted> mockHttpHelper = mock(TreePlanterHTTPHelper.class);
+        TreesPlanted result = new TreesPlanted(uuid, enterpriseId, projectId, user, treeCount);
 
-        when(mockHttpHelper.toJson(any())).thenReturn("");
+        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantSomeTrees(enterpriseId, projectId, user, treeCount);
 
-        when(mockHttpHelper.buildRequest(anyString()))
-                .thenReturn(HttpRequest.newBuilder(URI.create(url)).build());
+        RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
 
-        when(mockHttpHelper.parseResponse()).thenReturn((stringBody) -> {
-            RaaSException raasEx = new RaaSException(expectedErrorString);
-            return new TreesPlanted(raasEx);
+        var future = raas.plantSomeTrees(projectId, user, treeCount).thenAccept(s -> {
+            assertEquals(uuid, s.getUUId());
+            assertEquals(projectId, s.getProjectId());
+            assertEquals(enterpriseId, s.getEnterpriseId());
+            assertEquals(user, s.getUser());
+            assertEquals(treeCount, s.getTreeCount());
         });
 
-        TreePlanter planter = new RaaSTreePlanter(mockHttpHelper);
-        
-        RaaS raas = new RaaS(planter, url, enterpriseId, apiKey);
-
-        var future = raas.plantATree(projectId, user).thenAccept(s -> {
-            assertFalse(s.isSuccess());
-            assertEquals(expectedErrorString, s.getException().getMessage());
-            assertEquals(null, s.getUUId());
-            assertEquals(null, s.getProjectId());
-            assertEquals(null, s.getEnterpriseId());
-            assertEquals(null, s.getUser());
-            assertEquals(null, s.getTreeCount());
-        });
-        
         future.get();
 
+        verify(mockPlanter, times(1)).plantSomeTrees(enterpriseId, projectId, user, treeCount);
+
     }
+
 }

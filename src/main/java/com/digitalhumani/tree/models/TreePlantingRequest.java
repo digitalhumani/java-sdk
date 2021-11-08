@@ -1,4 +1,4 @@
-package com.digitalhumani.models;
+package com.digitalhumani.tree.models;
 
 public class TreePlantingRequest {
     private String enterpriseId;

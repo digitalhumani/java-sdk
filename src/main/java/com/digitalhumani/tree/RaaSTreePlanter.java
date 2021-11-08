@@ -1,4 +1,4 @@
-package com.digitalhumani;
+package com.digitalhumani.tree;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -6,14 +6,13 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.concurrent.CompletableFuture;
 
-import com.digitalhumani.models.TreePlantingRequest;
-import com.digitalhumani.models.TreesPlanted;
-import com.digitalhumani.utils.TreePlanterHTTPHelper;
+import com.digitalhumani.tree.interfaces.TreePlanter;
+import com.digitalhumani.tree.models.TreePlantingRequest;
+import com.digitalhumani.tree.models.TreesPlanted;
 import com.digitalhumani.exceptions.RaaSException;
 import com.digitalhumani.interfaces.HTTPHelper;
-import com.digitalhumani.interfaces.TreePlanter;
 
-class RaaSTreePlanter implements TreePlanter {
+public class RaaSTreePlanter implements TreePlanter {
 
     private HTTPHelper<TreePlantingRequest, TreesPlanted> httpHelper;
     private HttpClient httpClient;

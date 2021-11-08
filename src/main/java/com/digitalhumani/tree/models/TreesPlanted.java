@@ -1,8 +1,9 @@
-package com.digitalhumani.models;
+package com.digitalhumani.tree.models;
 
 import java.util.Date;
 
 import com.digitalhumani.exceptions.RaaSException;
+import com.digitalhumani.models.RaaSResult;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
