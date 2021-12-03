@@ -2,15 +2,16 @@ package com.digitalhumani.tree;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import com.digitalhumani.exceptions.RaaSException;
+import com.digitalhumani.interfaces.HTTPHelper;
 import com.digitalhumani.tree.interfaces.TreePlanter;
 import com.digitalhumani.tree.models.TreePlantingRequest;
 import com.digitalhumani.tree.models.TreesPlanted;
-import com.digitalhumani.exceptions.RaaSException;
-import com.digitalhumani.interfaces.HTTPHelper;
 
 public class RaaSTreePlanter implements TreePlanter {
 
@@ -27,31 +28,42 @@ public class RaaSTreePlanter implements TreePlanter {
         this.httpClient = HttpClient.newHttpClient();
     }
 
-    public CompletableFuture<TreesPlanted> plantATree(String enterpriseId, String projectId,
-            String user) throws RaaSException {
+    @Override
+    public CompletableFuture<TreesPlanted> plantATree(String enterpriseId, String projectId, String user)
+            throws RaaSException {
 
         TreePlantingRequest treeRequest = new TreePlantingRequest(enterpriseId, projectId, user, 1);
 
         String requestBody = this.httpHelper.toJson(treeRequest);
 
-        HttpRequest request = this.httpHelper.buildRequest(requestBody);
+        HttpRequest request = this.httpHelper.buildPostRequest(requestBody);
 
-        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
-                .thenApply(this.httpHelper.parseResponse());
+        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(this.httpHelper.parseResponse());
     }
 
-    public CompletableFuture<TreesPlanted> plantSomeTrees(String enterpriseId,
-            String projectId, String user, Integer treeCount) throws RaaSException {
+    @Override
+    public CompletableFuture<TreesPlanted> plantSomeTrees(String enterpriseId, String projectId, String user,
+            Integer treeCount) throws RaaSException {
 
         TreePlantingRequest treeRequest = new TreePlantingRequest(enterpriseId, projectId, user, treeCount);
 
         String requestBody = this.httpHelper.toJson(treeRequest);
 
-        HttpRequest request = this.httpHelper.buildRequest(requestBody);
+        HttpRequest request = this.httpHelper.buildPostRequest(requestBody);
 
-        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
-                .thenApply(this.httpHelper.parseResponse());
+        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(this.httpHelper.parseResponse());
 
+    }
+
+    @Override
+    public CompletableFuture<TreesPlanted> getATreePlanted(String uuid) throws RaaSException {
+
+        List<String> params = new ArrayList<>();
+        params.add(uuid);
+
+        HttpRequest request = this.httpHelper.buildGetRequest(params);
+
+        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(this.httpHelper.parseResponse());
     }
 
 }

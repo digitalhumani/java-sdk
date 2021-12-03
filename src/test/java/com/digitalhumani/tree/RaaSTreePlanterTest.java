@@ -1,10 +1,13 @@
 package com.digitalhumani.tree;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.badRequest;
+import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
+import static com.github.tomakehurst.wiremock.client.WireMock.unauthorized;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,7 +32,7 @@ public class RaaSTreePlanterTest  {
             .build();
 
     @Test
-    public void should_Return_TreePlanted_Object_With_Valid_Request_One_Tree() throws Exception {
+    public void should_Return_TreePlanted_Object_With_Valid_Request_Plant_One_Tree() throws Exception {
 
         String uuid = "eef9f369-9ae0-45b8-ab07-10650f53a71e";
         String created = "2019-05-17T00:36:25.797Z";
@@ -60,7 +63,7 @@ public class RaaSTreePlanterTest  {
     }
 
     @Test
-    public void should_Return_RaaSException_With_TreePlanted_Object_With_Invalid_Request_One_Tree() throws Exception {
+    public void should_Return_RaaSException_With_TreePlanted_Object_With_Invalid_Request_Plant_One_Tree() throws Exception {
         String enterpriseId = "123";
         String projectId = "123";
         String user = "JUnit";
@@ -76,6 +79,87 @@ public class RaaSTreePlanterTest  {
         var future = raasPlanter.plantATree(enterpriseId, projectId, user).thenAccept(s -> {
             assertFalse(s.isSuccess());
             assertEquals(RaaSException.class, s.getException().getClass());
+            assertEquals("Failed to parse response from RaaS API.", s.getException().getMessage());
+            assertEquals(null, s.getUUId());
+            assertEquals(null, s.getProjectId());
+            assertEquals(null, s.getEnterpriseId());
+            assertEquals(null, s.getUser());
+            assertEquals(null, s.getTreeCount());
+        });
+        future.get();
+    }
+
+    @Test
+    public void should_Return_TreePlanted_Object_With_Valid_Request_Get_Tree() throws Exception {
+        
+        String uuid = "eef9f369-9ae0-45b8-ab07-10650f53a71e";
+        String created = "2019-05-17T00:36:25.797Z";
+        String enterpriseId = "123";
+        String projectId = "123";
+        String user = "JUnit";
+        Integer treeCount = 1;
+
+        raasMock.stubFor(get(String.format("/tree/%s", uuid))
+        .withHeader("Content-Type", equalTo(CONTENT_TYPE))
+        .withHeader("User-Agent", equalTo(USER_AGENT))
+        .withHeader("X-API-KEY", equalTo(X_API_KEY))
+        .willReturn(okJson(String.format("{ \"uuid\": \"%s\", \"created\": \"%s\", \"treeCount\": %s, \"enterpriseId\": \"%s\", \"projectId\": \"%s\", \"user\": \"%s\" }", uuid, created, treeCount, enterpriseId, projectId, user))));
+
+        RaaSTreePlanter raasPlanter = new RaaSTreePlanter("http://localhost:" + HTTP_PORT, X_API_KEY);
+
+        var future = raasPlanter.getATreePlanted(uuid).thenAccept(s -> {
+            assertTrue(s.isSuccess());
+            assertEquals(null, s.getException());
+            assertEquals(uuid, s.getUUId());
+            assertEquals(projectId, s.getProjectId());
+            assertEquals(enterpriseId, s.getEnterpriseId());
+            assertEquals(user, s.getUser());
+            assertEquals(treeCount, s.getTreeCount());
+        });
+        future.get();
+    }
+
+    @Test
+    public void should_Return_Correct_Error_Message_When_Tree_Planted_Not_Found() throws Exception {
+        String uuid = "eef9f369-9ae0-45b8-ab07-10650f53a71e";
+
+        raasMock.stubFor(get(String.format("/tree/%s", uuid))
+        .withHeader("Content-Type", equalTo(CONTENT_TYPE))
+        .withHeader("User-Agent", equalTo(USER_AGENT))
+        .withHeader("X-API-KEY", equalTo(X_API_KEY))
+        .willReturn(notFound()));
+
+        RaaSTreePlanter raasPlanter = new RaaSTreePlanter("http://localhost:" + HTTP_PORT, X_API_KEY);
+
+        var future = raasPlanter.getATreePlanted(uuid).thenAccept(s -> {
+            assertFalse(s.isSuccess());
+            assertEquals(RaaSException.class, s.getException().getClass());
+            assertEquals("Could not find tree planted.", s.getException().getMessage());
+            assertEquals(null, s.getUUId());
+            assertEquals(null, s.getProjectId());
+            assertEquals(null, s.getEnterpriseId());
+            assertEquals(null, s.getUser());
+            assertEquals(null, s.getTreeCount());
+        });
+        future.get();
+    }
+
+    @Test
+    public void should_Return_Correct_Error_Message_When_Get_Tree_Not_Authorised() throws Exception {
+        String uuid = "eef9f369-9ae0-45b8-ab07-10650f53a71e";
+
+        raasMock.stubFor(get(String.format("/tree/%s", uuid))
+        .withHeader("Content-Type", equalTo(CONTENT_TYPE))
+        .withHeader("User-Agent", equalTo(USER_AGENT))
+        .withHeader("X-API-KEY", equalTo(X_API_KEY))
+        .willReturn(unauthorized()));
+
+        RaaSTreePlanter raasPlanter = new RaaSTreePlanter("http://localhost:" + HTTP_PORT, X_API_KEY);
+
+        var future = raasPlanter.getATreePlanted(uuid).thenAccept(s -> {
+            assertFalse(s.isSuccess());
+            assertEquals(RaaSException.class, s.getException().getClass());
+            assertEquals("Not authorised - check your API key.", s.getException().getMessage());
             assertEquals(null, s.getUUId());
             assertEquals(null, s.getProjectId());
             assertEquals(null, s.getEnterpriseId());
