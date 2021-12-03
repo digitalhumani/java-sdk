@@ -67,7 +67,8 @@ public class RaaSTest {
 
         TreesPlanted result = new TreesPlanted(uuid, enterpriseId, projectId, user, treeCount);
 
-        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantATree(enterpriseId, projectId, user);
+        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantATree(enterpriseId,
+                projectId, user);
 
         RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
 
@@ -99,7 +100,8 @@ public class RaaSTest {
 
         TreesPlanted result = new TreesPlanted(uuid, enterpriseId, projectId, user, treeCount);
 
-        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantSomeTrees(enterpriseId, projectId, user, treeCount);
+        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).plantSomeTrees(enterpriseId,
+                projectId, user, treeCount);
 
         RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
 
@@ -114,6 +116,39 @@ public class RaaSTest {
         future.get();
 
         verify(mockPlanter, times(1)).plantSomeTrees(enterpriseId, projectId, user, treeCount);
+
+    }
+
+    @Test
+    public void should_Call_TreePlanter_Only_Once_For_Get_A_Tree_Planted() throws Exception {
+
+        TreePlanter mockPlanter = mock(TreePlanter.class);
+
+        String uuid = "uuid";
+        String url = "https://foo.bar";
+        String enterpriseId = "foo";
+        String projectId = "bar";
+        String apiKey = "junit-api-key-test";
+        String user = "JUnit";
+        Integer treeCount = 5;
+
+        TreesPlanted result = new TreesPlanted(uuid, enterpriseId, projectId, user, treeCount);
+
+        doAnswer(invocation -> CompletableFuture.completedFuture(result)).when(mockPlanter).getATreePlanted(uuid);
+
+        RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
+
+        var future = raas.getATreePlanted(uuid).thenAccept(s -> {
+            assertEquals(uuid, s.getUUId());
+            assertEquals(projectId, s.getProjectId());
+            assertEquals(enterpriseId, s.getEnterpriseId());
+            assertEquals(user, s.getUser());
+            assertEquals(treeCount, s.getTreeCount());
+        });
+
+        future.get();
+
+        verify(mockPlanter, times(1)).getATreePlanted(uuid);
 
     }
 

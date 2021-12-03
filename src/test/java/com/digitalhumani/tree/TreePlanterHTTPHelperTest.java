@@ -7,7 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
 
 import com.digitalhumani.exceptions.RaaSException;
 import com.digitalhumani.tree.models.TreePlantingRequest;
@@ -57,18 +61,56 @@ public class TreePlanterHTTPHelperTest {
     }
 
     @Test
-    public void should_Build_A_Valid_HTTP_Request() {
+    public void should_Build_A_Valid_HTTP_POST_Request() {
         String url = "http://foo.bar";
         String apiKey = "key";
 
         TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
-        HttpRequest request = helper.buildRequest("foo");
+        HttpRequest request = helper.buildPostRequest("foo");
 
         assertEquals("application/json", request.headers().firstValue("Content-Type").get());
         assertEquals("Digital Humani Java SDK", request.headers().firstValue("User-Agent").get());
         assertEquals(apiKey, request.headers().firstValue("X-API-KEY").get());
         assertEquals(url + "/tree", request.uri().toString());
         assertEquals("POST", request.method());
+    }
+
+    @Test
+    public void should_Build_A_Valid_HTTP_GET_Request_With_Query_Params() {
+        String url = "http://foo.bar";
+        String apiKey = "key";
+        HashMap<String, String> params = new HashMap<String, String>();
+
+        params.put("foo", "bar");
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+        HttpRequest request = helper.buildGetRequest(params);
+
+        assertEquals("application/json", request.headers().firstValue("Content-Type").get());
+        assertEquals("Digital Humani Java SDK", request.headers().firstValue("User-Agent").get());
+        assertEquals(apiKey, request.headers().firstValue("X-API-KEY").get());
+        assertEquals(url + "/tree?foo=bar", request.uri().toString());
+        assertEquals("GET", request.method());
+
+    }
+
+    @Test
+    public void should_Build_A_Valid_HTTP_GET_Request_With_Params() {
+        String url = "http://foo.bar";
+        String apiKey = "key";
+        
+        List<String> param = new ArrayList<>();
+        param.add("foobar");
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+        HttpRequest request = helper.buildGetRequest(param);
+
+        assertEquals("application/json", request.headers().firstValue("Content-Type").get());
+        assertEquals("Digital Humani Java SDK", request.headers().firstValue("User-Agent").get());
+        assertEquals(apiKey, request.headers().firstValue("X-API-KEY").get());
+        assertEquals(url + "/tree/foobar", request.uri().toString());
+        assertEquals("GET", request.method());
+
     }
 
     @Test
@@ -88,7 +130,12 @@ public class TreePlanterHTTPHelperTest {
                 "{ \"uuid\": \"%s\", \"created\": \"%s\", \"treeCount\": %s, \"enterpriseId\": \"%s\", \"projectId\": \"%s\", \"user\": \"%s\" }",
                 uuid, created, treeCount, enterpriseId, projectId, user);
 
-        TreesPlanted result = helper.parseResponse().apply(treesPlantedAsString);
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn(treesPlantedAsString);
+
+        TreesPlanted result = helper.parseResponse().apply(mockResponse);
 
         assertEquals(uuid, result.getUUId());
 
@@ -112,12 +159,54 @@ public class TreePlanterHTTPHelperTest {
         String apiKey = "key";
 
         TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
-        String treesPlantedAsString = String.format("foo");
 
-        TreesPlanted result = helper.parseResponse().apply(treesPlantedAsString);
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(200);
+        when(mockResponse.body()).thenReturn("Foo");
+
+        TreesPlanted result = helper.parseResponse().apply(mockResponse);
         assertFalse(result.isSuccess());
         assertEquals(RaaSException.class, result.getException().getClass());
-        assertEquals("Failed to parse response from RaaS API", result.getException().getMessage());
+        assertEquals("Failed to parse response from RaaS API.", result.getException().getMessage());
+
+    }
+
+    @Test
+    public void should_Return_Correct_Error_Message_When_HTTP_Code_Is_401(){
+        String url = "http://foo.bar";
+        String apiKey = "key";
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(401);
+        when(mockResponse.body()).thenReturn("Foo");
+
+        TreesPlanted result = helper.parseResponse().apply(mockResponse);
+        assertFalse(result.isSuccess());
+        assertEquals(RaaSException.class, result.getException().getClass());
+        assertEquals("Not authorised - check your API key.", result.getException().getMessage());
+
+    }
+
+    @Test
+    public void should_Return_Correct_Error_Message_When_HTTP_Code_Is_404(){
+        String url = "http://foo.bar";
+        String apiKey = "key";
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(404);
+        when(mockResponse.body()).thenReturn("Foo");
+
+        TreesPlanted result = helper.parseResponse().apply(mockResponse);
+        assertFalse(result.isSuccess());
+        assertEquals(RaaSException.class, result.getException().getClass());
+        assertEquals("Could not find tree planted.", result.getException().getMessage());
 
     }
 }

@@ -3,6 +3,9 @@ package com.digitalhumani.tree;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 import com.digitalhumani.exceptions.RaaSException;
@@ -28,6 +31,7 @@ class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlan
         this.apiKey = apiKey;
     }
 
+    @Override
     public String toJson(TreePlantingRequest request) throws RaaSException {
         String requestBody = "";
         try {
@@ -41,21 +45,63 @@ class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlan
         return requestBody;
     }
 
-    public HttpRequest buildRequest(String requestBody) {
+    @Override
+    public HttpRequest buildPostRequest(String requestBody) {
         return HttpRequest.newBuilder(URI.create(this.url + RELATIVE_URL)).setHeader("Content-Type", CONTENT_TYPE)
                 .setHeader("X-API-KEY", this.apiKey).setHeader("User-Agent", USER_AGENT)
                 .POST(BodyPublishers.ofString(requestBody)).build();
     }
 
-    public Function<String, TreesPlanted> parseResponse() {
-        return (String stringBody) -> {
+    @Override
+    public Function<HttpResponse<String>, TreesPlanted> parseResponse() {
+        return (HttpResponse<String> response) -> {
+            if (response.statusCode() == 404) {
+                RaaSException raasEx = new RaaSException("Could not find tree planted.");
+                return new TreesPlanted(raasEx);
+            }
+
+            if (response.statusCode() == 401) {
+                RaaSException raasEx = new RaaSException("Not authorised - check your API key.");
+                return new TreesPlanted(raasEx);
+            }
+            
             try {
-                return this.objectMapper.readValue(stringBody, TreesPlanted.class);
+                return this.objectMapper.readValue(response.body(), TreesPlanted.class);
             } catch (JsonProcessingException e) {
-                RaaSException raasEx = new RaaSException("Failed to parse response from RaaS API");
+                RaaSException raasEx = new RaaSException("Failed to parse response from RaaS API.");
                 raasEx.initCause(e);
                 return new TreesPlanted(raasEx);
             }
         };
     }
+
+    @Override
+    public HttpRequest buildGetRequest(HashMap<String, String> queryParams) {
+
+        StringBuilder queryStringBuilder = new StringBuilder();
+        queryParams.forEach((k, v) -> queryStringBuilder.append(String.format("&%s=%s", k, v)));
+        String queryString = queryStringBuilder.toString().substring(1); // remove first &
+
+        return HttpRequest
+                .newBuilder(URI.create(String.format("%s%s?%s", this.url, RELATIVE_URL, queryString)))
+                .setHeader("Content-Type", CONTENT_TYPE).setHeader("X-API-KEY", this.apiKey)
+                .setHeader("User-Agent", USER_AGENT).GET().build();
+
+    }
+
+    @Override
+    public HttpRequest buildGetRequest(List<String> params) {
+        
+        StringBuilder paramBuilder = new StringBuilder();
+        params.forEach(item -> paramBuilder.append(String.format("/%s", item)));
+        
+        return HttpRequest
+                .newBuilder(URI.create(String.format("%s%s%s", this.url, RELATIVE_URL, paramBuilder.toString())))
+                .setHeader("Content-Type", CONTENT_TYPE).setHeader("X-API-KEY", this.apiKey)
+                .setHeader("User-Agent", USER_AGENT).GET().build();
+
+    }
+
+    
+
 }
