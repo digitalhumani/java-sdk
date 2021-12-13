@@ -13,8 +13,12 @@ import com.digitalhumani.tree.interfaces.TreePlanter;
 import com.digitalhumani.tree.models.TreesPlanted;
 
 /**
- * Hello world!
- *
+ * This is the main class for the SDK, providing access to RaaS functionality.
+ * 
+ * Before using any of the methods, valid configuration must be supplied either in
+ * /resources/raas.properties or via the constructor. 
+ * 
+ * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
  */
 public final class RaaS {
     private String apiKey;
@@ -24,6 +28,11 @@ public final class RaaS {
 
     private TreePlanter treePlanter;
 
+    /**
+     * The enterprise Id this istance of RaaS is associated with.
+     * 
+     * @return The Id of the currently configured enterprise.
+     */
     public String getEnterpriseId() {
         return enterpriseId;
     }
@@ -61,6 +70,13 @@ public final class RaaS {
         this.apiKey = apiKey;
     }
 
+    /**
+     * Public constructor. Relies on a valid `raas.properties` being configured in the `resources` folder of the project.
+     * 
+     * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
+     * 
+     * @throws ConfigurationException if an invalid `raas.properties` is detected.
+     */
     public RaaS() throws ConfigurationException {
         String apiKeyFromConfig = "";
         String enterpriseIdFromConfig = "";
@@ -90,6 +106,16 @@ public final class RaaS {
         this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
     }
 
+    /**
+     * Public constructor. Relies on the required configuration items being passed as parameters.
+     * 
+     * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
+     * 
+     * @param apiKey your unique API key
+     * @param environment the environment against which the requests will be made (either 'sandbox' or 'production').
+     * @param enterpriseId your unique enterprise Id.
+     * @throws ConfigurationException if invalid configuration items are detected.
+     */
     public RaaS(String apiKey, String environment, String enterpriseId) throws ConfigurationException {
 
         validateConfiguration(apiKey, enterpriseId, environment);
@@ -103,15 +129,45 @@ public final class RaaS {
         this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
     }
 
+    /**
+     * Plants a single tree. 
+     * 
+     * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
+     * 
+     * @param projectId the Id of the project this tree request relates to.
+     * @param user an arbitary user (or system) identifier.
+     * @return a {@code CompletableFuture<TreesPlanted>} containing the details of the tree planting request (including it's Id (uuid)).
+     * @throws RaaSException if an error occurs while making the request.
+     */
     public CompletableFuture<TreesPlanted> plantATree(String projectId, String user) throws RaaSException {
         return this.treePlanter.plantATree(this.enterpriseId, projectId, user);
     }
 
+    /**
+     * Plants multiple trees in one request.
+     * 
+     * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
+     * 
+     * @param projectId the Id of the project this tree request relates to.
+     * @param user an arbitary user (or system) identifier.
+     * @param treeCount the number of trees to be planted.
+     * @return a {@code CompletableFuture<TreesPlanted>} containing the details of the tree planting request (including it's Id (uuid)).
+     * @throws RaaSException if an error occurs while making the request.
+     */
     public CompletableFuture<TreesPlanted> plantSomeTrees(String projectId, String user, Integer treeCount)
             throws RaaSException {
         return this.treePlanter.plantSomeTrees(this.enterpriseId, projectId, user, treeCount);
     }
 
+    /**
+     * Retrieves the details of a tree planting request by it's Id (uuid).
+     * 
+     * Please see the <a href="https://github.com/digitalhumani/java-sdk">README</a> in the Github repo for more info.
+     * 
+     * @param uuid the Id of the tree planting request to retrieve.
+     * @return a {@code CompletableFuture<TreesPlanted>} containing the details of the tree planting request
+     * @throws RaaSException if an error occurs while making the request.
+     */
     public CompletableFuture<TreesPlanted> getATreePlanted(String uuid) 
             throws RaaSException {
         return this.treePlanter.getATreePlanted(uuid);
