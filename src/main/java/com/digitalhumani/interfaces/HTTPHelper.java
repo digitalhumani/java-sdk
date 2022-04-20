@@ -13,5 +13,7 @@ public interface HTTPHelper<U, T> {
     HttpRequest buildPostRequest(String requestBody);
     HttpRequest buildGetRequest(HashMap<String, String> queryParams);
     HttpRequest buildGetRequest(List<String> params);
+    HttpRequest buildDeleteRequest(List<String> params);
     Function<HttpResponse<String>, T> parseResponse();
+    Function<HttpResponse<String>, Boolean> wasSuccess();
 }

@@ -102,6 +102,28 @@ class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlan
 
     }
 
+    @Override
+    public HttpRequest buildDeleteRequest(List<String> params) {
+
+        StringBuilder paramBuilder = new StringBuilder();
+        params.forEach(item -> paramBuilder.append(String.format("/%s", item)));
     
+        return HttpRequest
+                .newBuilder(URI.create(String.format("%s%s%s", this.url, RELATIVE_URL, paramBuilder.toString())))
+                .setHeader("Content-Type", CONTENT_TYPE).setHeader("X-API-KEY", this.apiKey)
+                .setHeader("User-Agent", USER_AGENT).DELETE().build();
+
+    }
+
+    @Override
+    public Function<HttpResponse<String>, Boolean> wasSuccess() {
+        return (HttpResponse<String> response) -> {
+            if (response.statusCode() > 200) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+    }
 
 }

@@ -9,4 +9,5 @@ public interface TreePlanter {
     public CompletableFuture<TreesPlanted> plantATree(String enterpriseId, String projectId, String user) throws RaaSException;
     public CompletableFuture<TreesPlanted> plantSomeTrees(String enterpriseId, String projectId, String user, Integer treeCount) throws RaaSException;
     public CompletableFuture<TreesPlanted> getATreePlanted(String uuid) throws RaaSException;
+    public CompletableFuture<Boolean> deleteATreePlanted(String uuid) throws RaaSException;
 }

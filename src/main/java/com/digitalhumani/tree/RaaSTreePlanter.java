@@ -66,4 +66,15 @@ public class RaaSTreePlanter implements TreePlanter {
         return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(this.httpHelper.parseResponse());
     }
 
+    @Override
+    public CompletableFuture<Boolean> deleteATreePlanted(String uuid) {
+        
+        List<String> params = new ArrayList<>();
+        params.add(uuid);
+
+        HttpRequest request = this.httpHelper.buildDeleteRequest(params);
+
+        return this.httpClient.sendAsync(request, BodyHandlers.ofString()).thenApply(this.httpHelper.wasSuccess());
+    }
+
 }

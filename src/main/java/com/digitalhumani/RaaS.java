@@ -172,4 +172,16 @@ public final class RaaS {
             throws RaaSException {
         return this.treePlanter.getATreePlanted(uuid);
     }
+
+    /**
+     * Deletes a previously submitted tree planting request by its Id (uuid)
+     * 
+     * @param uuid the Id of the tree planting request to delete.
+     * @return Boolean indicating success / failure
+     * @throws RaaSException if an error occurs while making the request.
+     */
+    public CompletableFuture<Boolean> deleteATreePlanted(String uuid)
+            throws RaaSException {
+        return this.treePlanter.deleteATreePlanted(uuid);
+    }
 }

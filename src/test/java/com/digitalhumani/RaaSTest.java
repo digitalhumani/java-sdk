@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -150,6 +151,29 @@ public class RaaSTest {
 
         verify(mockPlanter, times(1)).getATreePlanted(uuid);
 
+    }
+
+    @Test
+    public void should_Call_TreePlanter_Only_Once_For_Delete_A_Tree_Planted() throws Exception {
+
+        TreePlanter mockPlanter = mock(TreePlanter.class);
+
+        String uuid = "uuid";
+        String url = "https://foo.bar";
+        String enterpriseId = "foo";
+        String apiKey = "junit-api-key-test";
+
+        doAnswer(invocation -> CompletableFuture.completedFuture(true)).when(mockPlanter).deleteATreePlanted(uuid);
+
+        RaaS raas = new RaaS(mockPlanter, url, enterpriseId, apiKey);
+
+        var future = raas.deleteATreePlanted(uuid).thenAccept(success -> {
+            assertTrue(success);
+        });
+
+        future.get();
+
+        verify(mockPlanter, times(1)).deleteATreePlanted(uuid);
     }
 
 }
