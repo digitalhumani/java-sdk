@@ -3,6 +3,7 @@ package com.digitalhumani.tree;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -114,6 +115,25 @@ public class TreePlanterHTTPHelperTest {
     }
 
     @Test
+    public void should_Build_A_Valid_HTTP_DELETE_Request_With_Params() {
+        String url = "http://foo.bar";
+        String apiKey = "key";
+        
+        List<String> param = new ArrayList<>();
+        param.add("foobar");
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+        HttpRequest request = helper.buildDeleteRequest(param);
+
+        assertEquals("application/json", request.headers().firstValue("Content-Type").get());
+        assertEquals("Digital Humani Java SDK", request.headers().firstValue("User-Agent").get());
+        assertEquals(apiKey, request.headers().firstValue("X-API-KEY").get());
+        assertEquals(url + "/tree/foobar", request.uri().toString());
+        assertEquals("DELETE", request.method());
+
+    }
+
+    @Test
     public void should_Return_A_TreesPlanted_Object_For_A_Valid_JSON_String() {
         String url = "http://foo.bar";
         String apiKey = "key";
@@ -207,6 +227,38 @@ public class TreePlanterHTTPHelperTest {
         assertFalse(result.isSuccess());
         assertEquals(RaaSException.class, result.getException().getClass());
         assertEquals("Could not find tree planted.", result.getException().getMessage());
+
+    }
+
+    @Test
+    public void should_Return_True_When_HTTP_Code_Is_Success(){
+        String url = "http://foo.bar";
+        String apiKey = "key";
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(200);
+        
+        Boolean result = helper.wasSuccess().apply(mockResponse);
+        assertTrue(result);
+
+    }
+
+    @Test
+    public void should_Return_True_When_HTTP_Code_Is_Not_Success(){
+        String url = "http://foo.bar";
+        String apiKey = "key";
+
+        TreePlanterHTTPHelper helper = new TreePlanterHTTPHelper(url, apiKey);
+
+        @SuppressWarnings("unchecked")
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(mockResponse.statusCode()).thenReturn(500);
+        
+        Boolean result = helper.wasSuccess().apply(mockResponse);
+        assertFalse(result);
 
     }
 }
