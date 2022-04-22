@@ -7,6 +7,7 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import com.digitalhumani.exceptions.RaaSException;
 import com.digitalhumani.interfaces.HTTPHelper;
@@ -14,6 +15,8 @@ import com.digitalhumani.tree.models.TreePlantingRequest;
 import com.digitalhumani.tree.models.TreesPlanted;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.w3c.dom.ranges.Range;
 
 class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlanted> {
 
@@ -102,6 +105,28 @@ class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlan
 
     }
 
+    @Override
+    public HttpRequest buildDeleteRequest(List<String> params) {
+
+        StringBuilder paramBuilder = new StringBuilder();
+        params.forEach(item -> paramBuilder.append(String.format("/%s", item)));
     
+        return HttpRequest
+                .newBuilder(URI.create(String.format("%s%s%s", this.url, RELATIVE_URL, paramBuilder.toString())))
+                .setHeader("Content-Type", CONTENT_TYPE).setHeader("X-API-KEY", this.apiKey)
+                .setHeader("User-Agent", USER_AGENT).DELETE().build();
+
+    }
+
+    @Override
+    public Function<HttpResponse<String>, Boolean> wasSuccess() {
+        return (HttpResponse<String> response) -> {
+            if (IntStream.range(200, 299).filter(item -> item == response.statusCode()).findAny().isEmpty()) {
+                return false;
+            } else {
+                return true;
+            }
+        };
+    }
 
 }
