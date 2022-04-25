@@ -44,7 +44,13 @@ public class IntegrationTest {
         if (enterpriseId == null || apiKey == null) {
             Properties prop = new Properties();
             String fileName = "int-test.config";
-            FileInputStream fis = new FileInputStream(fileName);
+            FileInputStream fis;
+            try {
+                fis = new FileInputStream(fileName);                
+            } catch (Exception e) {
+                return false;
+            }
+
             prop.load(fis);
 
             enterpriseId = prop.getProperty("ENTID");
