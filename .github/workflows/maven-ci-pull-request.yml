@@ -12,7 +12,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  run_tests:
+
+    env:
+        ENTID: ${{ secrets.ENTID }}
+        APIKEY: ${{ secrets.APIKEY }}
 
     runs-on: ubuntu-latest
 
@@ -24,9 +28,5 @@ jobs:
         java-version: '11'
         distribution: 'adopt'
         cache: maven
-    - name: Setup env
-      env:
-        ENTID: ${{ secrets.ENTID }}
-        APIKEY: ${{ secrets.APIKEY }}
     - name: Test with Maven
       run: mvn test --file pom.xml
