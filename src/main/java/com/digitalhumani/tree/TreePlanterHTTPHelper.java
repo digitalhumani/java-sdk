@@ -16,8 +16,6 @@ import com.digitalhumani.tree.models.TreesPlanted;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.w3c.dom.ranges.Range;
-
 class TreePlanterHTTPHelper implements HTTPHelper<TreePlantingRequest, TreesPlanted> {
 
     private ObjectMapper objectMapper = new ObjectMapper();
