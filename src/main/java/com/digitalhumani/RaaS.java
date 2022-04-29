@@ -7,7 +7,11 @@ import java.util.concurrent.CompletableFuture;
 import javax.naming.ConfigurationException;
 
 import com.digitalhumani.config.Config;
+import com.digitalhumani.enterprise.RaaSEnterprise;
+import com.digitalhumani.enterprise.interfaces.Enterprise;
+import com.digitalhumani.enterprise.models.TreesPlantedForMonth;
 import com.digitalhumani.exceptions.RaaSException;
+import com.digitalhumani.models.RaaSResult;
 import com.digitalhumani.tree.RaaSTreePlanter;
 import com.digitalhumani.tree.interfaces.TreePlanter;
 import com.digitalhumani.tree.models.TreesPlanted;
@@ -27,6 +31,7 @@ public final class RaaS {
     private String url;
 
     private TreePlanter treePlanter;
+    private Enterprise enterprise;
 
     /**
      * The enterprise Id this istance of RaaS is associated with.
@@ -63,8 +68,9 @@ public final class RaaS {
             throw new ConfigurationException("Error: @environment parameter must be one of 'production','sandbox'");
     }
 
-    RaaS(TreePlanter treePlanter, String url, String enterpriseId, String apiKey) {
+    RaaS(TreePlanter treePlanter, Enterprise enterprise, String url, String enterpriseId, String apiKey) {
         this.treePlanter = treePlanter;
+        this.enterprise = enterprise;
         this.url = url;
         this.enterpriseId = enterpriseId;
         this.apiKey = apiKey;
@@ -104,6 +110,7 @@ public final class RaaS {
         setUrl();
 
         this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
+        this.enterprise = new RaaSEnterprise(this.url, this.apiKey);
     }
 
     /**
@@ -127,6 +134,7 @@ public final class RaaS {
         setUrl();
 
         this.treePlanter = new RaaSTreePlanter(this.url, this.apiKey);
+        this.enterprise = new RaaSEnterprise(this.url, this.apiKey);
     }
 
     /**
@@ -183,5 +191,11 @@ public final class RaaS {
     public CompletableFuture<Boolean> deleteATreePlanted(String uuid)
             throws RaaSException {
         return this.treePlanter.deleteATreePlanted(uuid);
+    }
+
+    
+    public CompletableFuture<TreesPlantedForMonth> getTreesPlantedForMonth(String month)
+        throws RaaSException {
+            return this.enterprise.getTreesPlantedForMonth(this.enterpriseId, month);
     }
 }
