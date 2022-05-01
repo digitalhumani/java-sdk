@@ -193,7 +193,12 @@ public final class RaaS {
         return this.treePlanter.deleteATreePlanted(uuid);
     }
 
-    
+    /**
+     * Gets the total number of trees planted for a given month
+     * @param month the required month, e.g. '2022-05'
+     * @return A TreePlantedForMonth instance with the total number of trees planted
+     * @throws RaaSException
+     */
     public CompletableFuture<TreesPlantedForMonth> getTreesPlantedForMonth(String month)
         throws RaaSException {
             return this.enterprise.getTreesPlantedForMonth(this.enterpriseId, month);

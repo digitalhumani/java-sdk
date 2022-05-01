@@ -2,20 +2,6 @@
 
 This repository hosts the DigitalHumani Java SDK. It can be used for interacting with the DigitalHumani RaaS (Reforestation-as-a-Service) API.
 
-## Design
-
-This SDK is broken down by feature. Each feature is surfaced to the consumer of the SDK via the `RaaS` class. 
-
-At the time of writing, only the 'Tree' feature is supplied but eventually will be expanded to include 'Enterprise', 'Project' etc. 
-
-There are shared classes and interfaces that all features use in the root of the project folder. These include the `config`, `exceptions` and `interfaces` folders.
-
-One of the main shared interfaces is the `com.digitalhumani.interfaces.HTTPHelper<U, T>`. For each feature, it is intended to be used as a way of providing consistency for making and receiving HTTP requests/responses from the RaaS API itself. 
-
-The generic parameter `<U>` represents the HTTP request made to the API, while the generic parameter `<T>` represents the response. 
-
-Please study the `com.digitalhumani.tree.TreePlanterHTTPHelper` to get a better idea of how this works.
-
 ## Installation
 
 The Java SDK for RaaS is hosted in the Central Repository of Open Source Software Repository Hosting (OSSRH). If you are using Maven, add the following to your `pom.xml`:
@@ -24,7 +10,7 @@ The Java SDK for RaaS is hosted in the Central Repository of Open Source Softwar
 <dependency>
     <groupId>com.digitalhumani</groupId>
     <artifactId>digitalhumani-java-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.x.x</version>
 </dependency>
 ```
 
@@ -110,6 +96,29 @@ future.get();
 
 All the 'Tree' methods return a `TreesPlanted` object via the [`CompletableFuture`](https://www.baeldung.com/java-completablefuture) API.
 
+**Get trees planted for a given month**
+
+To get the total number of trees planted for a given month, use the `getTreesPlantedForMonth` method passing in the month required, e.g. "2022-05":
+
+```java
+var future = raas.getTreesPlantedForMonth("2022-05").thenAccept(treesPlantedForMonth -> {
+    System.out.println(String.format("Total trees planted: %s",treesPlantedForMonth.getTotalTrees()));
+});
+future.get();
+```
+
+**Delete trees planted**
+
+It's also possible to delete previously submitted trees:
+
+```java
+var future = raas.deleteATreePlanted(uuid).thenAccept(success -> {
+    if (success){
+        System.out.println("Tree was successfully deleted");    
+    }
+});
+future.get();
+```
 
 ## Contributing
 
