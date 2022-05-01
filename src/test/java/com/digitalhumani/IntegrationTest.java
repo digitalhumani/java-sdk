@@ -1,4 +1,4 @@
-package com.digitalhumani.tree;
+package com.digitalhumani;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,13 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import com.digitalhumani.RaaS;
 import com.digitalhumani.exceptions.RaaSException;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -31,7 +33,7 @@ public class IntegrationTest {
 
     private String enterpriseId;
     private String apiKey;
-    private String tree_uuid;
+    private ArrayList<String> tree_uuids = new ArrayList<String>();
 
     boolean runIntegrationTest()
         throws FileNotFoundException, IOException {
@@ -40,7 +42,8 @@ public class IntegrationTest {
         enterpriseId = System.getenv("ENTID");
         apiKey = System.getenv("APIKEY");
 
-        // If config not found in env, attempt to load from config file
+        // If config not found in env, attempt to load from config file - loading from file is useful
+        // if debugging unit tests if unit test runner doesn't have access to env variables.
         if (enterpriseId == null || apiKey == null) {
             Properties prop = new Properties();
             String fileName = "int-test.config";
@@ -78,7 +81,7 @@ public class IntegrationTest {
             assertEquals(enterpriseId, treePlanted.getEnterpriseId());
             assertEquals(USER_ID, treePlanted.getUser());
             assertEquals(1, treePlanted.getTreeCount());
-            tree_uuid = treePlanted.getUUId();
+            tree_uuids.add(treePlanted.getUUId());
         });
         future.get();
     }
@@ -86,6 +89,29 @@ public class IntegrationTest {
     @Test
     @EnabledIf("runIntegrationTest")
     @Order(2)
+    public void plant_some_trees() 
+        throws javax.naming.ConfigurationException,
+        RaaSException,
+        InterruptedException,
+        ExecutionException {
+
+        RaaS raas = new RaaS(apiKey, "sandbox", enterpriseId);
+        var future = raas.plantSomeTrees(PROJECT_ID, USER_ID, 10).thenAccept(treePlanted -> {
+            assertTrue(treePlanted.isSuccess());
+            assertEquals(null, treePlanted.getException());
+            assertNotNull(treePlanted.getUUId());
+            assertEquals(PROJECT_ID, treePlanted.getProjectId());
+            assertEquals(enterpriseId, treePlanted.getEnterpriseId());
+            assertEquals(USER_ID, treePlanted.getUser());
+            assertEquals(10, treePlanted.getTreeCount());
+            tree_uuids.add(treePlanted.getUUId());
+        });
+        future.get();
+    }
+
+    @Test
+    @EnabledIf("runIntegrationTest")
+    @Order(3)
     public void get_a_tree() 
         throws javax.naming.ConfigurationException,
         RaaSException,
@@ -93,10 +119,10 @@ public class IntegrationTest {
         ExecutionException {
 
         RaaS raas = new RaaS(apiKey, "sandbox", enterpriseId);
-        var future = raas.getATreePlanted(tree_uuid).thenAccept(treePlanted -> {
+        var future = raas.getATreePlanted(tree_uuids.get(0)).thenAccept(treePlanted -> {
             assertTrue(treePlanted.isSuccess());
             assertEquals(null, treePlanted.getException());
-            assertEquals(tree_uuid, treePlanted.getUUId());
+            assertEquals(tree_uuids.get(0), treePlanted.getUUId());
             assertEquals(PROJECT_ID, treePlanted.getProjectId());
             assertEquals(enterpriseId, treePlanted.getEnterpriseId());
             assertEquals(USER_ID, treePlanted.getUser());
@@ -107,18 +133,52 @@ public class IntegrationTest {
 
     @Test
     @EnabledIf("runIntegrationTest")
-    @Order(3)
-    public void delete_a_tree() 
+    @Order(4)
+    public void get_trees_planted_for_month() 
         throws javax.naming.ConfigurationException,
         RaaSException,
         InterruptedException,
         ExecutionException {
 
         RaaS raas = new RaaS(apiKey, "sandbox", enterpriseId);
-        var future = raas.deleteATreePlanted(tree_uuid).thenAccept(result -> {
-            assertTrue(result);
+
+        LocalDate now = LocalDate.now();
+        String month = String.valueOf(now.getMonthValue());
+        month = month.length() == 1 ? String.format("0%s", month) : month;
+        String year = String.valueOf(now.getYear());
+        String yearMonth = String.format("%s-%s", year, month);
+
+        var future = raas.getTreesPlantedForMonth(yearMonth).thenAccept(treesPlantedForMonth -> {
+            assertTrue(treesPlantedForMonth.isSuccess());
+            assertEquals(null, treesPlantedForMonth.getException());
+            assertNotNull(treesPlantedForMonth.getTotalTrees());
+            assertTrue(treesPlantedForMonth.getTotalTrees() > 0);
         });
         future.get();
+    }
+
+    @Test
+    @EnabledIf("runIntegrationTest")
+    @Order(5)
+    public void delete_trees_planted() 
+        throws javax.naming.ConfigurationException,
+        RaaSException,
+        InterruptedException,
+        ExecutionException {
+
+        RaaS raas = new RaaS(apiKey, "sandbox", enterpriseId);
+        ArrayList<CompletableFuture<Boolean>> futures = new ArrayList<CompletableFuture<Boolean>>();
+
+        for (String uuid : tree_uuids) {
+            futures.add(raas.deleteATreePlanted(uuid));
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+
+        for (CompletableFuture<Boolean> future : (Iterable<CompletableFuture<Boolean>>) futures::iterator) {
+            assertTrue(future.get());
+        }
+
     }
 
 }
